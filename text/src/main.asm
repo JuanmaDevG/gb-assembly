@@ -1,0 +1,207 @@
+;;----------LICENSE NOTICE-------------------------------------------------------------------------------------------------------;;
+;;  This file is part of GBTelera: A Gameboy Development Framework                                                               ;;
+;;  Copyright (C) 2024 ronaldo / Cheesetea / ByteRealms (@FranGallegoBR)                                                         ;;
+;;                                                                                                                               ;;
+;; Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation    ;;
+;; files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy,    ;;
+;; modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the         ;;
+;; Softwareis furnished to do so, subject to the following conditions:                                                           ;;
+;;                                                                                                                               ;;
+;; The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.;;
+;;                                                                                                                               ;;
+;; THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE          ;;
+;; WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR         ;;
+;; COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,   ;;
+;; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                         ;;
+;;-------------------------------------------------------------------------------------------------------------------------------;;
+
+
+; REMEMBER: the screen has 20x18 tiles (160x144px)
+DEF _VRAM EQU $8000
+DEF _TILEMAP_1 EQU $9800
+DEF _TILEMAP_2 EQU $9c00
+
+NEWCHARMAP texto, main ; New charmap to substitute the main charmap (utf-8)
+CHARMAP "A", 1
+CHARMAP "B", 2
+CHARMAP "C", 3
+CHARMAP "D", 4
+CHARMAP "E", 5
+CHARMAP "F", 6
+CHARMAP "G", 7
+CHARMAP "H", 8
+CHARMAP "I", 9
+CHARMAP "J", 10
+CHARMAP "K", 11
+CHARMAP "L", 12
+CHARMAP "M", 13
+CHARMAP "N", 14
+CHARMAP "O", 15
+CHARMAP "P", 16
+CHARMAP "Q", 17
+CHARMAP "R", 18
+CHARMAP "S", 19
+CHARMAP "T", 20
+CHARMAP "U", 21
+CHARMAP "V", 22
+CHARMAP "W", 23
+CHARMAP "X", 24
+CHARMAP "Y", 25
+CHARMAP "Z", 26
+CHARMAP "a", 27
+CHARMAP "b", 28
+CHARMAP "c", 29
+CHARMAP "d", 30
+CHARMAP "e", 31
+CHARMAP "f", 32
+CHARMAP "g", 33
+CHARMAP "h", 34
+CHARMAP "i", 35
+CHARMAP "j", 36
+CHARMAP "k", 37
+CHARMAP "l", 38
+CHARMAP "m", 39
+CHARMAP "n", 40
+CHARMAP "o", 41
+CHARMAP "p", 42
+CHARMAP "q", 43
+CHARMAP "r", 44
+CHARMAP "s", 45
+CHARMAP "t", 46
+CHARMAP "u", 47
+CHARMAP "v", 48
+CHARMAP "w", 49
+CHARMAP "x", 50
+CHARMAP "y", 51
+CHARMAP "z", 52
+CHARMAP ",", 53
+CHARMAP "!", 54
+CHARMAP " ", 55
+
+SECTION "Font data", ROM0 
+font_data:
+  DB $00,$00,$18,$18,$24,$24,$42,$42
+  DB $42,$42,$7E,$7E,$42,$42,$42,$42
+  DB $00,$00,$7C,$7C,$42,$42,$42,$42
+  DB $7C,$7C,$42,$42,$42,$42,$7C,$7C
+  DB $00,$00,$3E,$3E,$60,$60,$40,$40
+  DB $40,$40,$40,$40,$60,$60,$3E,$3E
+  DB $00,$00,$7C,$7C,$46,$46,$42,$42
+  DB $42,$42,$42,$42,$46,$46,$7C,$7C
+  DB $00,$00,$7E,$7E,$40,$40,$40,$40
+  DB $78,$78,$40,$40,$40,$40,$7E,$7E
+  DB $00,$00,$7E,$7E,$40,$40,$40,$40
+  DB $78,$78,$40,$40,$40,$40,$40,$40
+  DB $00,$00,$3E,$3E,$60,$60,$40,$40
+  DB $5E,$5E,$42,$42,$62,$62,$3E,$3E
+  DB $00,$00,$42,$42,$42,$42,$42,$42
+  DB $7E,$7E,$42,$42,$42,$42,$42,$42
+  DB $00,$00,$7E,$7E,$18,$18,$18,$18
+  DB $18,$18,$18,$18,$18,$18,$7E,$7E
+  DB $00,$00,$7E,$7E,$04,$04,$04,$04
+  DB $44,$44,$44,$44,$64,$64,$3C,$3C
+  DB $00,$00,$46,$46,$4C,$4C,$58,$58
+  DB $70,$70,$58,$58,$4C,$4C,$46,$46
+  DB $00,$00,$60,$60,$60,$60,$60,$60
+  DB $60,$60,$60,$60,$60,$60,$7E,$7E
+  DB $00,$00,$42,$42,$66,$66,$5A,$5A
+  DB $5A,$5A,$42,$42,$42,$42,$42,$42
+  DB $00,$00,$42,$42,$62,$62,$72,$72
+  DB $5A,$5A,$4E,$4E,$46,$46,$42,$42
+  DB $00,$00,$3C,$3C,$66,$66,$42,$42
+  DB $42,$42,$42,$42,$66,$66,$3C,$3C
+  DB $00,$00,$7C,$7C,$42,$42,$42,$42
+  DB $42,$42,$7C,$7C,$40,$40,$40,$40
+  DB $00,$00,$3C,$3C,$66,$66,$42,$42
+  DB $52,$52,$4A,$4A,$64,$64,$3E,$3E
+  DB $00,$00,$7C,$7C,$46,$46,$42,$42
+  DB $7C,$7C,$70,$70,$58,$58,$4E,$4E
+  DB $00,$00,$3E,$3E,$40,$40,$40,$40
+  DB $3C,$3C,$02,$02,$02,$02,$7C,$7C
+  DB $00,$00,$7E,$7E,$18,$18,$18,$18
+  DB $18,$18,$18,$18,$18,$18,$18,$18
+  DB $00,$00,$42,$42,$42,$42,$42,$42
+  DB $42,$42,$42,$42,$66,$66,$3C,$3C
+  DB $00,$00,$42,$42,$42,$42,$42,$42
+  DB $66,$66,$24,$24,$3C,$3C,$18,$18
+  DB $00,$00,$42,$42,$42,$42,$5A,$5A
+  DB $5A,$5A,$5A,$5A,$66,$66,$24,$24
+  DB $00,$00,$42,$42,$66,$66,$3C,$3C
+  DB $18,$18,$3C,$3C,$66,$66,$42,$42
+  DB $00,$00,$42,$42,$66,$66,$3C,$3C
+  DB $18,$18,$18,$18,$18,$18,$18,$18
+  DB $00,$00,$7E,$7E,$06,$06,$0C,$0C
+  DB $18,$18,$30,$30,$60,$60,$7E,$7E
+  DB $00,$00,$00,$00,$00,$00,$00,$00
+  DB $34,$34,$48,$48,$48,$48,$36,$36
+  DB $00,$00,$20,$20,$20,$20,$20,$20
+  DB $28,$28,$34,$34,$24,$24,$18,$18
+  DB $00,$00,$00,$00,$00,$00,$1C,$1C
+  DB $20,$20,$20,$20,$20,$20,$1C,$1C
+  DB $00,$00,$04,$04,$04,$04,$04,$04
+  DB $04,$04,$1C,$1C,$24,$24,$1A,$1A
+  DB $00,$00,$00,$00,$00,$00,$18,$18
+  DB $24,$24,$38,$38,$22,$22,$1C,$1C
+  DB $00,$00,$18,$18,$24,$24,$20,$20
+  DB $38,$38,$20,$20,$20,$20,$20,$20
+  DB $00,$00,$1A,$1A,$24,$24,$24,$24
+  DB $1C,$1C,$04,$04,$2C,$2C,$18,$18
+  DB $00,$00,$20,$20,$20,$20,$20,$20
+  DB $28,$28,$34,$34,$24,$24,$24,$24
+  DB $00,$00,$00,$00,$00,$00,$10,$10
+  DB $00,$00,$10,$10,$10,$10,$18,$18
+  DB $00,$00,$08,$08,$00,$00,$08,$08
+  DB $18,$18,$08,$08,$28,$28,$10,$10
+  DB $00,$00,$00,$00,$00,$00,$24,$24
+  DB $28,$28,$30,$30,$28,$28,$24,$24
+  DB $00,$00,$18,$18,$08,$08,$08,$08
+  DB $08,$08,$08,$08,$08,$08,$08,$08
+  DB $00,$00,$00,$00,$00,$00,$20,$20
+  DB $3E,$3E,$2A,$2A,$2A,$2A,$2A,$2A
+  DB $00,$00,$00,$00,$00,$00,$20,$20
+  DB $38,$38,$24,$24,$24,$24,$24,$24
+  DB $00,$00,$00,$00,$00,$00,$00,$00
+  DB $18,$18,$24,$24,$24,$24,$18,$18
+  DB $00,$00,$00,$00,$38,$38,$24,$24
+  DB $24,$24,$38,$38,$20,$20,$20,$20
+  DB $00,$00,$00,$00,$1C,$1C,$24,$24
+  DB $2C,$2C,$14,$14,$06,$06,$04,$04
+  DB $00,$00,$00,$00,$00,$00,$24,$24
+  DB $38,$38,$20,$20,$20,$20,$20,$20
+  DB $00,$00,$00,$00,$00,$00,$1C,$1C
+  DB $20,$20,$18,$18,$04,$04,$38,$38
+  DB $00,$00,$00,$00,$10,$10,$3C,$3C
+  DB $10,$10,$10,$10,$10,$10,$08,$08
+  DB $00,$00,$00,$00,$00,$00,$00,$00
+  DB $24,$24,$24,$24,$24,$24,$18,$18
+  DB $00,$00,$00,$00,$00,$00,$00,$00
+  DB $44,$44,$44,$44,$28,$28,$10,$10
+  DB $00,$00,$00,$00,$00,$00,$00,$00
+  DB $54,$54,$54,$54,$54,$54,$28,$28
+  DB $00,$00,$00,$00,$00,$00,$44,$44
+  DB $28,$28,$10,$10,$28,$28,$44,$44
+  DB $00,$00,$00,$00,$24,$24,$24,$24
+  DB $24,$24,$18,$18,$04,$04,$38,$38
+  DB $00,$00,$00,$00,$00,$00,$00,$00
+  DB $3C,$3C,$08,$08,$10,$10,$3C,$3C
+  DB $00,$00,$00,$00,$00,$00,$00,$00
+  DB $00,$00,$60,$60,$20,$20,$40,$40
+  DB $00,$00,$10,$10,$10,$10,$10,$10
+  DB $10,$10,$10,$10,$00,$00,$10,$10
+
+SECTION "Text data", ROM0
+text: db "I flex screen!", 0
+
+SECTION "Entry point", ROM0[$150]
+main::
+  di
+  ld hl, font_data
+  ld de, $8010    ; vram src addr
+  ld bc, 54 * 16  ; tile bytecount
+  call load_vram
+  
+  ld hl, text
+  ld de, $9800  ; screen coords
+  call draw_text
+
+  halt

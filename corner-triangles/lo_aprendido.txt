@@ -1,0 +1,70 @@
+==========================
+= Cosas que he aprendido =
+==========================
+
+- La sección "Entry point" comienza en la dirección $0150 de la ROM0
+
+- Puedo definir bytes da datos por encima de la sección de Entry point porque en el header.asm salta directamente a la etiqueta main
+
+- Es conveniente ir aprendiendo las directivas de compilador del ensamblador porque nos ahorran mucho trabajo
+
+- El único registro plenamente útil es hl, puede leer y escribir donde quiera y soporta más operaciones de 16 bits
+
+- Los registros b, c, d, e, giran al rededor del registro a, y cuando forman un puntero, solo pueden entregar datos al registro a y nunca escribir
+
+- Hay que perder la pena por mantener variables en los registros y usar la memoria muy frecuentemente, los registros son insuficientes para mantener
+  algoritmos básicos a flote.
+- No puedes declarar contenido (bytes) fuera de las secciones, como mínimo debes crear una sección
+
+- Si declaras bytes dentro de una sección en la que hay código ejecutable, se convierten en instrucciones, lo que da graves problemas
+
+- Es necesario tener habilidad gestionando el registro a, porque la mayoria de operaciones de 8 bits giran a su alrededor
+
+- En el uso del debbugger, lo fundamental es f3 para ir paso a paso, f9 para runear teniendo en cuenta los breakpoints y shift+f9 para ser un tryhard
+
+- Puedes poner breakpoints haciendo doble click en una línea de instrucción
+
+- Todas las escrituras a memoria de 16 bits, estan agrupadas (y deberían agruparse) en little endian, por lo que hay que cargar los bytes de los registros
+  largos al reves byte a byte y en orden inverso para preservar el valor del operando.
+
+- Si voy a matener una constante en un registro para ahorrar instrucciones de carga, mejor que sea b, c, d, e, porque hl es un registro omnipotente,
+  a es un registro al rededor del cual gira la aritmética de la CPU, y f va a modificarse en cada operación que lo requiera.
+
+- La directiva "include" de ensamblador, nos permite incluir plugins y definiciones
+
+- Casi se me olvida que las operaciones aplicadas a registros de 8 bits que no son "a", también escriben las flags y se pueden usar para condicionales sin
+  hacer movimientos innecesarios al registro "a"
+
+- Es conveniente indentar las instrucciones condicionales de cierre de bucles a la altura de la etiqueta padre (a la que hacen referencia)
+
+- Las únicas lecturas y escrituras en memoria de 16 bits, son las operaciones de stack frame (push y pop), en el resto de casos hay que escribir bytes
+
+- Se puede cambiar la ubicación del sp a otra en la WRAM, normalmente se hace cuando los 128 bytes no son suficientes y se quiere apilar muchos datos
+
+- En el ensamblaje, el linker solo exporta los las etiquetas (símbolos) que tienen doble "::", de lo contrario, las llamadas internas (del fichero) son
+  resueltas en tiempo de ensamblaje.
+
+=============================================
+= Mejor modelo mental para uso de registros =
+=============================================
+
+A -> acumulador, calculador
+B/C -> contadores
+D/E -> almacenamiento temporal
+H/L -> normalmente en conjunto como puntero a datos (el puntero mas poderoso)
+
+===========================================================
+= Cosas interesantes sobre la PPU (adoro esta asignatura) =
+===========================================================
+
+- Por lo visto, para que sea posible escribir en la VRAM, necesitamos sincronizar el contenido de rLY de la PPU en el modo correcto, para no pillar a la PPU
+  dibujando (si es así, anula las escrituras a vram) y así tener la vram desbloqueada para escritura.
+
+- La PPU tiene estos modos, para sincronizar:
+  0: tras terminar de dibujar una linea en modo 2, la PPU está en este modo mientras espera al principio de la siguiente linea. La VRAM es accesible, HBlank
+  1: la PPU espera al siguiente frame, toda la VRAM es accesible y se le llama VBlank
+  2: la PPU está buscando los sprites para dibujar, la VRAM es accesible a exxcepción de la de los sprites (objetos)
+  3: la PPU está dibujando, la VRAM es inaccesible
+
+- En el ejemplo de este ejercicio, esperar a que el registro rLY tenga el valor 144 (VBlank, modo 1, ha acabado las filas) es extremadamente ineficiente, 
+  hay que aprovechar las otras 144 iteraciones del modo HBlank (modo 0) para dibujar en las filas correspondientes y así mantener los 60fps.
