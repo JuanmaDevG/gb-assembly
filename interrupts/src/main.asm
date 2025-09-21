@@ -26,6 +26,15 @@ DEF _IF EQU $ff0f ; Interrupt flag: modified by the system by interrupts
 
 include "font.inc"
 include "macros.inc"
+include "assets.inc"
+
+
+; PARAM: hl, de, bc
+MACRO REG_PARAM
+  ld hl, \1
+  ld de, \2
+  ld bc, \3
+ENDM
 
 
 SECTION "VBlank handler", ROM0[$40]
@@ -62,13 +71,17 @@ SECTION "Functions", ROM0
     ret
 
 
+SECTION "Game data", WRAM0
+ds 2
+
+
 SECTION "Entry point", ROM0[$150]
 main::
   di
   call interrupt_setup
-  ld hl, font
-  ld de, $8010
-  ld bc, FONT_SIZE
+  REG_PARAM font, VRAM_FONT, FONT_SIZE
+  call load_vram_block
+  REG_PARAM assets, VRAM_ASSETS, ASSETS_SIZE
   call load_vram_block
 
   halt
