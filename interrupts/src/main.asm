@@ -15,6 +15,8 @@
 ;; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                         ;;
 ;;-------------------------------------------------------------------------------------------------------------------------------;;
 
+; TODO: look reset vector. Very interesting for small one-byte calls
+
 ; _IME : CPU flag only accesible by "di", "ei" and "reti"
 DEF _IE EQU $ffff ; Interrupt enable: what interrupts are we interested in
 DEF _IF EQU $ff0f ; Interrupt flag: modified by the system by interrupts
@@ -22,34 +24,51 @@ DEF _IF EQU $ff0f ; Interrupt flag: modified by the system by interrupts
 ; IE INTERRUPT BITS:
 ; 0 -> VBlank
 
-SECTION "Interrupts", ROM0[$40]
-jp vblank_handler
-ds 5, 0
+include "font.inc"
+include "macros.inc"
 
 
-SECTION "Variables", WRAM0
-vblank_flag: ds 1
+SECTION "VBlank handler", ROM0[$40]
+reti
+ds 7, 0
 
 
-; NOTE: Handlers can be called whenever by interruptions to they must make a context switch
-SECTION "Handlers", ROM0
-vblank_handler:
-  push hl
-  push af
-  ld a, 1
-  ld [vblank_flag], a
-  ;TODO
-
-
-SECTION "Procedures", ROM0
-  ; NOPARAM
-  interrupt_setup::
+SECTION "Functions", ROM0
+  ; NOPARAM, use: a
+  interrupt_setup:
     ld a, %00000001
-    ld a, [$ffff]
+    ld [$ffff], a     ; Interrupt enable:
+    ret
+
+  ; TODO: make more vram writes with HBlank
+  ; PARAM: bc = bytecount, hl = src block addr, de = dst block addr
+  load_vram_block:
+    ei
+    .wait:
+      halt
+    .safe_tile_load:
+      LD16B_HL2DE
+      ld a, c
+      sub 16
+      ld c, a
+      jr nc, .ignore_carry
+      dec b
+      .ignore_carry:
+      ld a, [$ff44]
+      cp 152
+      jr nc, .wait ; VBlank is about to end
+      jr .safe_tile_load
+    di
     ret
 
 
 SECTION "Entry point", ROM0[$150]
 main::
-   di     ;; Disable Interrupts
-   halt   ;; Halt the CPU (stop procesing here)
+  di
+  call interrupt_setup
+  ld hl, font
+  ld de, $8010
+  ld bc, FONT_SIZE
+  call load_vram_block
+
+  halt
