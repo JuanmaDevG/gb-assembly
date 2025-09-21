@@ -71,8 +71,29 @@ SECTION "Functions", ROM0
     ret
 
 
+  ; NOPARAM, use: hl, de, bc
+  clear_screen:
+    ei
+    ld hl, $9800
+    ld bc, $1214 ; 18 columns, 20 rows
+    ld a, 0
+    .wait:
+      halt
+    .clear_tile:
+      ld [hl+], 0
+      dec c
+      jr nz, .no_linejump
+      dec b
+      jr z, .end
+      .no_linejump:
+      ; TODO: if not enough time to draw, go wait
+
+
 SECTION "Game data", WRAM0
 ds 2
+
+SECTION "Text data", ROM0
+text: db "How are you Rob? Move around but please, add the characters left to your font, it is still incomplete", 0
 
 
 SECTION "Entry point", ROM0[$150]
@@ -83,5 +104,7 @@ main::
   call load_vram_block
   REG_PARAM assets, VRAM_ASSETS, ASSETS_SIZE
   call load_vram_block
+
+  ; Start with Rob
 
   halt
