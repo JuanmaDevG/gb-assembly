@@ -1,12 +1,11 @@
 DEF rLY EQU $ff44
 DEF SCREEN_BUF_1 EQU $9800
 
-DEF rLY_VSYNC_INIT      EQU 144
-DEF rLY_VSYNC_END_SAFE  EQU 153
+DEF rLY_VSYNC_INIT  EQU 144
+DEF rLY_VSYNC_END   EQU 153
 
 ; NOTE: this algorithms are slow because there are a lot of instructions and checks between each copied byte
 ;       but it's made just for fun, so I don't care.
-
 
 SECTION "Functions", ROM0
 

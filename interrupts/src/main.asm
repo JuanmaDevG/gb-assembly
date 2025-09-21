@@ -15,28 +15,41 @@
 ;; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                         ;;
 ;;-------------------------------------------------------------------------------------------------------------------------------;;
 
-include "font.inc"
+; _IME : CPU flag only accesible by "di", "ei" and "reti"
+DEF _IE EQU $ffff ; Interrupt enable: what interrupts are we interested in
+DEF _IF EQU $ff0f ; Interrupt flag: modified by the system by interrupts
 
-; REMEMBER: the screen has 20x18 tiles (160x144px)
-DEF _VRAM EQU $8000
-DEF _TILEMAP_1 EQU $9800
-DEF _TILEMAP_2 EQU $9c00
+; IE INTERRUPT BITS:
+; 0 -> VBlank
+
+SECTION "Interrupts", ROM0[$40]
+jp vblank_handler
+ds 5, 0
 
 
-SECTION "Text data", ROM0
-text: db "I flex screen!", 0
+SECTION "Variables", WRAM0
+vblank_flag: ds 1
+
+
+; NOTE: Handlers can be called whenever by interruptions to they must make a context switch
+SECTION "Handlers", ROM0
+vblank_handler:
+  push hl
+  push af
+  ld a, 1
+  ld [vblank_flag], a
+  ;TODO
+
+
+SECTION "Procedures", ROM0
+  ; NOPARAM
+  interrupt_setup::
+    ld a, %00000001
+    ld a, [$ffff]
+    ret
 
 
 SECTION "Entry point", ROM0[$150]
 main::
-  di
-  ld hl, font
-  ld de, $8010    ; vram src addr
-  ld bc, 54 * 16  ; tile bytecount
-  call load_vram
-  
-  ld hl, text
-  ld de, $9800  ; screen coords
-  call draw_text
-
-  halt
+   di     ;; Disable Interrupts
+   halt   ;; Halt the CPU (stop procesing here)
