@@ -83,6 +83,7 @@ SECTION "Functions", ROM0
       ld [hl+], 0
       dec c
       jr nz, .no_linejump
+      add hl, $c
       dec b
       jr z, .end
       .no_linejump:
