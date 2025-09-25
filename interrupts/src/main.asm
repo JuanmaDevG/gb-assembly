@@ -17,9 +17,10 @@
 
 ; TODO: look reset vector. Very interesting for small one-byte calls
 
-; _IME : CPU flag only accesible by "di", "ei" and "reti"
-DEF _IE EQU $ffff ; Interrupt enable: what interrupts are we interested in
-DEF _IF EQU $ff0f ; Interrupt flag: modified by the system by interrupts
+;IME : CPU flag only accesible by "di", "ei" and "reti"
+DEF rIE EQU $ffff ; Interrupt enable: what interrupts are we interested in
+DEF rIF EQU $ff0f ; Interrupt flag: modified by the system by interrupts
+DEF rLY EQU $ff44
 
 ; IE INTERRUPT BITS:
 ; 0 -> VBlank
@@ -30,63 +31,83 @@ include "assets.inc"
 
 
 ; PARAM: hl, de, bc
-MACRO REG_PARAM
+MACRO HLDEBC
   ld hl, \1
   ld de, \2
   ld bc, \3
 ENDM
 
 
-SECTION "VBlank handler", ROM0[$40]
+SECTION "Interrupt handlers", ROM0[$40]
+; vblank
 reti
 ds 7, 0
 
 
 SECTION "Functions", ROM0
   ; NOPARAM, use: a
-  interrupt_setup:
+  interrupt_mode_load:
     ld a, %00000001
     ld [$ffff], a     ; Interrupt enable:
     ret
 
-  ; TODO: make more vram writes with HBlank
+  ; NOPARAM
+  interrupt_mode_game:
+    ; TODO: learn all about interrupts
+
   ; PARAM: bc = bytecount, hl = src block addr, de = dst block addr
   load_vram_block:
     ei
-    .wait:
+    .next_block:
+      ld a, b
+      cp 0
+      jr nz, .load_big_block
+      ld a, c
+      cp 16
+      jr nc, .load_big_block
+    .load_small_block:
       halt
-    .safe_tile_load:
-      LD16B_HL2DE
+      ld a, [hl+]
+      ld [de], a
+      inc de
+      dec c
+      jr nz, .load_small_block
+      di
+      ret
+    .load_big_block:
+      halt
+      LD16_HL2DE
       ld a, c
       sub 16
-      ld c, a
-      jr nc, .ignore_carry
+      jr nc, .skip_carry
       dec b
-      .ignore_carry:
-      ld a, [$ff44]
-      cp 152
-      jr nc, .wait ; VBlank is about to end
-      jr .safe_tile_load
-    di
-    ret
+      .skip_carry:
+        jr .next_block
 
 
-  ; NOPARAM, use: hl, de, bc
+  ; NOPARAM, USE ALL
   clear_screen:
     ei
     ld hl, $9800
     ld bc, $1214 ; 18 columns, 20 rows
-    ld a, 0
+    ld de, 12
     .wait:
       halt
     .clear_tile:
-      ld [hl+], 0
+      xor a
+      ld [hl+], a
       dec c
       jr nz, .no_linejump
-      add hl, $c
+      add hl, de
       dec b
       jr z, .end
       .no_linejump:
+      ld a, [$ff44]
+      cp 153
+      jr z, .wait
+    .end
+      di
+      ret
       ; TODO: if not enough time to draw, go wait
 
 
@@ -100,12 +121,14 @@ text: db "How are you Rob? Move around but please, add the characters left to yo
 SECTION "Entry point", ROM0[$150]
 main::
   di
-  call interrupt_setup
-  REG_PARAM font, VRAM_FONT, FONT_SIZE
+  call interrupt_mode_load
+  HLDEBC font, VRAM_FONT, FONT_SIZE
   call load_vram_block
-  REG_PARAM assets, VRAM_ASSETS, ASSETS_SIZE
+  HLDEBC assets, VRAM_ASSETS, ASSETS_SIZE
   call load_vram_block
+  call clear_screen
 
-  ; Start with Rob
+  call interrupt_mode_game
+
 
   halt

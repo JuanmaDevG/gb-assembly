@@ -1,4 +1,7 @@
 
+DEF FONT_SIZE EQU 16 * 54
+DEF VRAM_FONT EQU $8010
+
 NEWCHARMAP texto, main ; New charmap to substitute the main charmap (utf-8)
 CHARMAP "A", 1
 CHARMAP "B", 2
@@ -54,10 +57,9 @@ CHARMAP "y", 51
 CHARMAP "z", 52
 CHARMAP ",", 53
 CHARMAP "!", 54
-CHARMAP " ", 55
-
-DEF FONT_SIZE EQU 16 * 54
-DEF VRAM_FONT EQU $8010
+CHARMAP "'", 55
+CHARMAP "?", 56
+CHARMAP " ", 57
 
 SECTION "Font data", ROM0 
 font:
