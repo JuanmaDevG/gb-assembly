@@ -1,5 +1,5 @@
 
-NEWCHARMAP texto, main ; New charmap to substitute the main charmap (utf-8)
+NEWCHARMAP texto, main
 CHARMAP "A", 1
 CHARMAP "B", 2
 CHARMAP "C", 3
